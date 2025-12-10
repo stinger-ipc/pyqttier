@@ -146,6 +146,5 @@ cython_debug/
 .DS_Store
 
 # Project specific
-uv.lock
 check_py37_compat.py
 PYTHON37_COMPAT.md
