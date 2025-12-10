@@ -23,6 +23,14 @@ class MockConnection(IBrokerConnection):
         self._lock = threading.Lock()
 
     @property
+    def client_id(self) -> str:
+        return "mock-client"
+    
+    @property
+    def online_topic(self) -> Optional[str]:
+        return None
+
+    @property
     def published_messages(self) -> List[Message]:
         """Returns list of all published messages for testing verification."""
         with self._lock:
