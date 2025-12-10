@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.7"
 dependencies = [
+    "mypy>=1.4.1",
     "paho-mqtt>=2.1.0",
     "pydantic>=2.5.3",
 ]
