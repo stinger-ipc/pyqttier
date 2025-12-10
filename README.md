@@ -8,7 +8,7 @@ A Python MQTT client library providing a clean, type-safe wrapper around paho-mq
 - **Type Safety** - Strongly typed with mypy-checked type hints for reliability
 - **Multiple Transports** - Supports TCP, WebSocket, and Unix socket connections
 - **Mock Implementation** - Built-in `MockConnection` for easy testing without a broker
-- **Python 3.7+** - Compatible with Python 3.7 through 3.12
+- **Python 3.7+** - Compatible with Python 3.7 through 3.12 [![Python 3.7 Tests](https://github.com/stinger-ipc/pyqttier/actions/workflows/python37.yml/badge.svg)](https://github.com/stinger-ipc/pyqttier/actions/workflows/python37.yml)
 
 ## Installation
 
