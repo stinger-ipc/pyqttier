@@ -70,6 +70,17 @@ class Message:
         return msg_obj
 
     @classmethod
+    def signal_message(
+        cls, topic: str, payload: BaseModel
+    ) -> "Message":
+        return cls(
+            topic=topic,
+            payload=payload.model_dump_json(by_alias=True).encode("utf-8"),
+            qos=1,
+            retain=False,
+        )
+
+    @classmethod
     def status_message(
         cls, topic, status_message: BaseModel, expiry_seconds: int
     ) -> "Message":
@@ -199,7 +210,7 @@ class Message:
         return msg_obj
 
     @classmethod
-    def publish_request(
+    def request_message(
         cls,
         topic: str,
         request_obj: BaseModel,
