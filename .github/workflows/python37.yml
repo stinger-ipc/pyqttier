@@ -18,6 +18,7 @@ jobs:
           pip-install: ".[dev]"
       - name: Run unit tests
         run: |
+          pip install pytest
           python -m pytest
       - name: Run mock example
         run: |
@@ -25,4 +26,5 @@ jobs:
 
       - name: Mypy Type Check
         run: |
+          pip install mypy
           python -m mypy --check-untyped-defs ./src/
