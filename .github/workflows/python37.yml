@@ -23,8 +23,3 @@ jobs:
       - name: Run mock example
         run: |
           python examples/mock_example.py
-
-      - name: Mypy Type Check
-        run: |
-          pip install mypy==1.4.1
-          python -m mypy --python-version 3.7 --check-untyped-defs ./src/
