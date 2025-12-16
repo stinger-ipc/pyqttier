@@ -4,7 +4,7 @@ from copy import copy
 from .interface import IBrokerConnection, MessageCallback
 from .message import Message
 import threading
-
+import logging
 
 class MockConnection(IBrokerConnection):
     """
@@ -20,7 +20,9 @@ class MockConnection(IBrokerConnection):
         self._message_callbacks = []  # type: List[MessageCallback]
         self._published_messages = []  # type: List[Message]
         self._next_subscription_id = 1  # type: int
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.info("Initialized MockConnection")
 
     @property
     def client_id(self) -> str:
@@ -41,6 +43,19 @@ class MockConnection(IBrokerConnection):
         with self._lock:
             self._published_messages.clear()
 
+    def find_published(self, topic: str) -> List[Message]:
+        """
+        Find published messages matching the given topic pattern (supports wildcards).
+        
+        Args:
+            topic: Topic pattern to match, supports MQTT wildcards (+ and #)
+        
+        Returns:
+            List of messages that match the topic pattern
+        """
+        with self._lock:
+            return [msg for msg in self._published_messages if self.is_topic_sub(msg.topic, topic)]
+
     def set_connected(self, connected: bool) -> "MockConnection":
         """Sets the connection status for testing."""
         with self._lock:
@@ -52,6 +67,7 @@ class MockConnection(IBrokerConnection):
         Simulates receiving a message from the broker.
         Triggers appropriate callbacks based on subscriptions.
         """
+        self._logger.debug("Simulating incoming message on topic: %s", message.topic)
         with self._lock:
             # Check subscription-specific callbacks
             for sub_id, (topic_filter, callback) in self._subscriptions.items():
@@ -63,6 +79,7 @@ class MockConnection(IBrokerConnection):
                         return
 
             # If no specific callback matched, call general message callbacks
+            self._logger.debug("No subscription-specific callback matched, calling general callbacks")
             for callback in self._message_callbacks:
                 callback(message)
 
@@ -70,6 +87,7 @@ class MockConnection(IBrokerConnection):
         """
         Records the published message and returns a completed Future.
         """
+        self._logger.debug("Publishing message to topic: %s", message.topic)
         with self._lock:
             self._published_messages.append(message)
 
@@ -81,6 +99,7 @@ class MockConnection(IBrokerConnection):
         """
         Registers a subscription and returns a subscription ID.
         """
+        self._logger.debug("Subscribe to topic: %s", topic)
         with self._lock:
             sub_id = self._next_subscription_id
             self._next_subscription_id += 1

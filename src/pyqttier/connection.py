@@ -51,7 +51,7 @@ class Mqtt5Connection(IBrokerConnection):
 
         self._connect_inner_mqtt_client()
 
-        self._message_handling_lock = threading.Lock()
+        self._message_handling_lock = threading.RLock()
         with self._message_handling_lock:
             self._subscription_callbacks = dict()  # type: Dict[int, MessageCallback]
             self._message_callbacks = []  # type: List[MessageCallback]

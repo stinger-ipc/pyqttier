@@ -100,6 +100,9 @@ class Message:
         correlation_id: Union[str, bytes],
         debug_info: Optional[str] = None,
     ) -> "Message":
+        """
+        This could be used for a response to a request, but where there was an error fulfilling the request.
+        """
         msg_obj = cls(
             topic=topic,
             payload=b"{}",
@@ -126,6 +129,9 @@ class Message:
         return_code: int,
         correlation_id: Union[str, bytes],
     ) -> "Message":
+        """
+        This could be used for a successful response to a request.
+        """
         msg_obj = cls(
             topic=response_topic,
             payload=response_obj.model_dump_json(by_alias=True).encode("utf-8"),
@@ -144,6 +150,9 @@ class Message:
     def property_state_message(
         cls, topic: str, state_obj: BaseModel, state_version: Optional[int] = None
     ) -> "Message":
+        """
+        Creates a retained message representing the state/value of a property.
+        """
         msg_obj = cls(
             topic=topic,
             payload=state_obj.model_dump_json(by_alias=True).encode("utf-8"),
@@ -163,6 +172,9 @@ class Message:
         response_topic: str,
         correlation_id: Union[str, bytes, None] = None,
     ) -> "Message":
+        """
+        Creates a message representing a request to update a property.
+        """
         msg_obj = cls(
             topic=topic,
             payload=property_obj.model_dump_json(by_alias=True).encode("utf-8"),
@@ -188,6 +200,9 @@ class Message:
         correlation_id: Union[str, bytes],
         debug_info: Optional[str] = None,
     ) -> "Message":
+        """
+        Creates a message representing a response to a property update request.
+        """
         msg_obj = cls(
             topic=response_topic,
             payload=property_obj.model_dump_json(by_alias=True).encode("utf-8"),
