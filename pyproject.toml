@@ -1,7 +1,7 @@
 [project]
 name = "pyqttier"
-version = "0.1.5"
-description = "Add your description here"
+version = "0.2.1"
+description = "Convenient wrapper around Paho MQTT"
 readme = "README.md"
 authors = [
     { name = "Jacob Brunson", email = "github@jacobbrunson.com" }
@@ -9,7 +9,6 @@ authors = [
 requires-python = ">=3.7"
 dependencies = [
     "paho-mqtt>=2.1.0",
-    "pydantic>=2.5.3",
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -115,6 +115,10 @@ class Mqtt5Connection(IBrokerConnection):
                 if sub_id in self._subscription_callbacks:
                     self._subscription_callbacks[sub_id](message)
                     return
+                else:
+                    self._logger.debug("No specific callback for subscription ID %d", sub_id)
+        else:
+            self._logger.warning("No subscription ID found in message properties. This is not usual because we always provide one when subscribing.")
         with self._message_handling_lock:
             for callback in self._message_callbacks:
                 callback(message)
@@ -132,7 +136,7 @@ class Mqtt5Connection(IBrokerConnection):
                     break
                 else:
                     self._logger.debug(
-                        "Connected and subscribing to %s", pending_subscr.topic
+                        "Connected and subscribing to %s as subscription_id=%d", pending_subscr.topic, pending_subscr.subscription_id
                     )
                     sub_props = MqttProperties(PacketTypes.SUBSCRIBE)
                     sub_props.SubscriptionIdentifier = pending_subscr.subscription_id
@@ -194,6 +198,8 @@ class Mqtt5Connection(IBrokerConnection):
             self._queued_subscriptions.put(self.PendingSubscription(topic, sub_id))
         if callback is not None:
             self._subscription_callbacks[sub_id] = callback
+        else:
+            self._logger.warning("No callback provided for subscription to %s", topic)
         return sub_id
 
     def is_topic_sub(self, topic: str, sub: str) -> bool:

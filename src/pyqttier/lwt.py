@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+
 from .message import Message
+from dataclasses import dataclass
 
-
-class OnlinePresence(BaseModel):
+@dataclass
+class OnlinePresence:
     topic: str
     online: Message
     offline: Message
