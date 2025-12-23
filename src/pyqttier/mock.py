@@ -95,7 +95,7 @@ class MockConnection(IBrokerConnection):
         future.set_result(None)
         return future
 
-    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None) -> int:
+    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None, qos: int = 1) -> int:
         """
         Registers a subscription and returns a subscription ID.
         """
