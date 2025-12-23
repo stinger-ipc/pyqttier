@@ -63,4 +63,6 @@ class Message:
             msg_obj.response_topic = properties["ResponseTopic"]
         if "MessageExpiryInterval" in properties:
             msg_obj.message_expiry_interval = properties["MessageExpiryInterval"]
+        if "SubscriptionIdentifier" in properties:
+            msg_obj.subscription_id = properties["SubscriptionIdentifier"]
         return msg_obj

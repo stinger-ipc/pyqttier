@@ -17,7 +17,7 @@ class IBrokerConnection(ABC):
         pass
 
     @abstractmethod
-    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None) -> int:
+    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None, qos: int = 1) -> int:
         """
         Subscribes to the provided topic.  May queue the subscription until the connection to the broker is established.
         When a message is received on the topic, the provided callback will be executed if provided.

@@ -1,6 +1,6 @@
 [project]
 name = "pyqttier"
-version = "0.2.1"
+version = "0.2.2"
 description = "Convenient wrapper around Paho MQTT"
 readme = "README.md"
 authors = [

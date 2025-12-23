@@ -23,6 +23,7 @@ class Mqtt5Connection(IBrokerConnection):
     class PendingSubscription:
         topic: str
         subscription_id: int
+        qos: int
 
     @dataclass
     class PendingPublish:
@@ -141,7 +142,7 @@ class Mqtt5Connection(IBrokerConnection):
                     sub_props = MqttProperties(PacketTypes.SUBSCRIBE)
                     sub_props.SubscriptionIdentifier = pending_subscr.subscription_id
                     self._client.subscribe(
-                        pending_subscr.topic, qos=1, properties=sub_props
+                        pending_subscr.topic, qos=pending_subscr.qos, properties=sub_props
                     )
             while not self._queued_messages.empty():
                 try:
@@ -183,7 +184,7 @@ class Mqtt5Connection(IBrokerConnection):
             self._queued_messages.put(pending_pub)
         return fut
 
-    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None) -> int:
+    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None, qos: int = 1) -> int:
         """Subscribes to a topic. If the connection is not established, the subscription is queued.
         Returns the subscription ID.
         """
@@ -192,10 +193,10 @@ class Mqtt5Connection(IBrokerConnection):
             self._logger.debug("Subscribing to %s", topic)
             sub_props = MqttProperties(PacketTypes.SUBSCRIBE)
             sub_props.SubscriptionIdentifier = sub_id
-            self._client.subscribe(topic, qos=1, properties=sub_props)
+            self._client.subscribe(topic, qos=qos, properties=sub_props)
         else:
             self._logger.debug("Pending subscription to %s", topic)
-            self._queued_subscriptions.put(self.PendingSubscription(topic, sub_id))
+            self._queued_subscriptions.put(self.PendingSubscription(topic, sub_id, qos))
         if callback is not None:
             self._subscription_callbacks[sub_id] = callback
         else:
