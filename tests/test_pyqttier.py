@@ -75,7 +75,7 @@ class TestMockConnection(unittest.TestCase):
         self.assertEqual(len(received_messages), 1)
         self.assertEqual(received_messages[0].topic, "test/topic")
         self.assertEqual(received_messages[0].payload, b"hello")
-        self.assertEqual(received_messages[0].subscription_id, sub_id)
+        self.assertEqual(received_messages[0].subscription_ids, [sub_id])
 
     def test_multiple_subscriptions(self):
         """Test multiple subscriptions with different callbacks."""
