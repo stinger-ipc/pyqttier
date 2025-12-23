@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from paho.mqtt.client import MQTTMessage
 from paho.mqtt.properties import Properties as MqttProperties
 from paho.mqtt.packettypes import PacketTypes
@@ -13,7 +13,7 @@ class Message:
     content_type: Optional[str] = None
     correlation_data: Optional[bytes] = None
     response_topic: Optional[str] = None
-    subscription_id: Optional[int] = None  # Ignored on publish
+    subscription_ids: List[int] = field(default_factory=list)  # Ignored on publish
     message_expiry_interval: Optional[int] = None
     user_properties: Optional[Dict[str, str]] = field(default_factory=dict)
 
@@ -64,5 +64,6 @@ class Message:
         if "MessageExpiryInterval" in properties:
             msg_obj.message_expiry_interval = properties["MessageExpiryInterval"]
         if "SubscriptionIdentifier" in properties:
-            msg_obj.subscription_id = properties["SubscriptionIdentifier"]
+            sub_ids = properties["SubscriptionIdentifier"] if isinstance(properties["SubscriptionIdentifier"], list) else [properties["SubscriptionIdentifier"]]
+            msg_obj.subscription_ids = sub_ids
         return msg_obj

@@ -74,7 +74,7 @@ class MockConnection(IBrokerConnection):
                 if self.is_topic_sub(message.topic, topic_filter):
                     if callback is not None:
                         receiving_msg = copy(message)
-                        receiving_msg.subscription_id = sub_id
+                        receiving_msg.subscription_ids = [sub_id]
                         callback(receiving_msg)
                         return
 

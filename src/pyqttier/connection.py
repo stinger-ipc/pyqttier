@@ -110,14 +110,16 @@ class Mqtt5Connection(IBrokerConnection):
     def _on_message(self, client, userdata, msg):
         self._logger.debug("Got a message to %s : %s", msg.topic, msg.payload.decode())
         message = Message.from_paho_message(msg)
-        if message.subscription_id is not None:
-            sub_id = message.subscription_id
-            with self._message_handling_lock:
-                if sub_id in self._subscription_callbacks:
-                    self._subscription_callbacks[sub_id](message)
-                    return
-                else:
-                    self._logger.debug("No specific callback for subscription ID %d", sub_id)
+        if len(message.subscription_ids) > 0:
+            for sub_id in message.subscription_ids:
+                with self._message_handling_lock:
+                    if sub_id in self._subscription_callbacks:
+                        self._subscription_callbacks[sub_id](message)
+                        return
+                    else:
+                        self._logger.debug("No specific callback for subscription ID %d", sub_id)
+            else:
+                self._logger.debug("No matching subscription ID callbacks found for message.")
         else:
             self._logger.warning("No subscription ID found in message properties. This is not usual because we always provide one when subscribing.")
         with self._message_handling_lock:
