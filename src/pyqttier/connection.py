@@ -9,7 +9,7 @@ from paho.mqtt.properties import Properties as MqttProperties
 from paho.mqtt.packettypes import PacketTypes
 from queue import Queue, Empty
 from .interface import IBrokerConnection, MessageCallback
-from .transport import MqttTransport
+from .transport import MqttTransport, MqttTransportType
 from .message import Message
 from .lwt import OnlinePresence
 from dataclasses import dataclass
@@ -35,10 +35,13 @@ class Mqtt5Connection(IBrokerConnection):
         transport: MqttTransport,
         client_id: Optional[str] = None,
         lwt: Optional[OnlinePresence] = None,
+        credentials: Optional[Tuple[str, str]] = None,
     ):
         self._logger = logging.getLogger("MqttConnection")
         self._transport = transport
         self._client_id = client_id or str(uuid.uuid4())
+        self._username = credentials[0] if credentials is not None else None
+        self._password = credentials[1] if credentials is not None else None
         self._queued_messages = Queue()  # type: Queue[Mqtt5Connection.PendingPublish]
         self._queued_subscriptions = (
             Queue()
@@ -79,6 +82,17 @@ class Mqtt5Connection(IBrokerConnection):
         self._client.on_message = self._on_message
         self._client.on_publish = self.on_publish_complete
         self._client.will_set(**self._lwt.online.paho_kwargs())
+        if self._username is not None:
+            self._client.username_pw_set(self._username, self._password)
+        if self._transport.tls_enabled and not self._transport.transport == MqttTransportType.UNIX:
+            self._client.tls_set(
+                ca_certs=self._transport.ca_certs,
+                certfile=self._transport.certfile,
+                keyfile=self._transport.keyfile,
+                cert_reqs=self._transport.cert_reqs,  # type: ignore[arg-type]
+                tls_version=self._transport.tls_version,
+                ciphers=self._transport.ciphers,
+            )
         host = self._transport.host_or_path or "localhost"
         self._client.connect(host, self._transport.port)
 
