@@ -85,7 +85,10 @@ class Mqtt5Connection(IBrokerConnection):
         self._client.will_set(**self._lwt.online.paho_kwargs())
         if self._username is not None:
             self._client.username_pw_set(self._username, self._password)
-        if self._transport.tls_enabled and not self._transport.transport == MqttTransportType.UNIX:
+        if (
+            self._transport.tls_enabled
+            and not self._transport.transport == MqttTransportType.UNIX
+        ):
             self._client.tls_set(
                 ca_certs=self._transport.ca_certs,
                 certfile=self._transport.certfile,
@@ -135,11 +138,17 @@ class Mqtt5Connection(IBrokerConnection):
                         self._subscription_callbacks[sub_id](message)
                         return
                     else:
-                        self._logger.debug("No specific callback for subscription ID %d", sub_id)
+                        self._logger.debug(
+                            "No specific callback for subscription ID %d", sub_id
+                        )
             else:
-                self._logger.debug("No matching subscription ID callbacks found for message.")
+                self._logger.debug(
+                    "No matching subscription ID callbacks found for message."
+                )
         else:
-            self._logger.warning("No subscription ID found in message properties. This is not usual because we always provide one when subscribing.")
+            self._logger.warning(
+                "No subscription ID found in message properties. This is not usual because we always provide one when subscribing."
+            )
         with self._message_handling_lock:
             for callback in self._message_callbacks:
                 callback(message)
@@ -157,12 +166,16 @@ class Mqtt5Connection(IBrokerConnection):
                     break
                 else:
                     self._logger.debug(
-                        "Connected and subscribing to %s as subscription_id=%d", pending_subscr.topic, pending_subscr.subscription_id
+                        "Connected and subscribing to %s as subscription_id=%d",
+                        pending_subscr.topic,
+                        pending_subscr.subscription_id,
                     )
                     sub_props = MqttProperties(PacketTypes.SUBSCRIBE)
                     sub_props.SubscriptionIdentifier = pending_subscr.subscription_id
                     self._client.subscribe(
-                        pending_subscr.topic, qos=pending_subscr.qos, properties=sub_props
+                        pending_subscr.topic,
+                        qos=pending_subscr.qos,
+                        properties=sub_props,
                     )
             while not self._queued_messages.empty():
                 try:
@@ -191,7 +204,9 @@ class Mqtt5Connection(IBrokerConnection):
                 fut = self._publish_futures.pop(mid)
                 fut.set_result(True)
             else:
-                self._logger.warning("Received publish complete for unknown message ID %d", mid)
+                self._logger.warning(
+                    "Received publish complete for unknown message ID %d", mid
+                )
 
     def publish(self, message: Message) -> Future:
         """Publish a message to mqtt, or queue it if not connected yet.  Returns a Future that completes when the message is published."""
@@ -207,7 +222,9 @@ class Mqtt5Connection(IBrokerConnection):
             self._queued_messages.put(pending_pub)
         return fut
 
-    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None, qos: int = 1) -> int:
+    def subscribe(
+        self, topic: str, callback: Optional[MessageCallback] = None, qos: int = 1
+    ) -> int:
         """Subscribes to a topic. If the connection is not established, the subscription is queued.
         Returns the subscription ID.
         """

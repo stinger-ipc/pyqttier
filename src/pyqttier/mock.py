@@ -6,6 +6,7 @@ from .message import Message
 import threading
 import logging
 
+
 class MockConnection(IBrokerConnection):
     """
     Mock implementation of IBrokerConnection for testing purposes.
@@ -27,7 +28,7 @@ class MockConnection(IBrokerConnection):
     @property
     def client_id(self) -> str:
         return "mock-client"
-    
+
     @property
     def online_topic(self) -> Optional[str]:
         return None
@@ -46,15 +47,19 @@ class MockConnection(IBrokerConnection):
     def find_published(self, topic: str) -> List[Message]:
         """
         Find published messages matching the given topic pattern (supports wildcards).
-        
+
         Args:
             topic: Topic pattern to match, supports MQTT wildcards (+ and #)
-        
+
         Returns:
             List of messages that match the topic pattern
         """
         with self._lock:
-            return [msg for msg in self._published_messages if self.is_topic_sub(msg.topic, topic)]
+            return [
+                msg
+                for msg in self._published_messages
+                if self.is_topic_sub(msg.topic, topic)
+            ]
 
     def set_connected(self, connected: bool) -> "MockConnection":
         """Sets the connection status for testing."""
@@ -79,7 +84,9 @@ class MockConnection(IBrokerConnection):
                         return
 
             # If no specific callback matched, call general message callbacks
-            self._logger.debug("No subscription-specific callback matched, calling general callbacks")
+            self._logger.debug(
+                "No subscription-specific callback matched, calling general callbacks"
+            )
             for callback in self._message_callbacks:
                 callback(message)
 
@@ -95,7 +102,9 @@ class MockConnection(IBrokerConnection):
         future.set_result(None)
         return future
 
-    def subscribe(self, topic: str, callback: Optional[MessageCallback] = None, qos: int = 1) -> int:
+    def subscribe(
+        self, topic: str, callback: Optional[MessageCallback] = None, qos: int = 1
+    ) -> int:
         """
         Registers a subscription and returns a subscription ID.
         """

@@ -65,4 +65,3 @@ class MqttTransport:
         self.cert_reqs = cert_reqs
         self.tls_version = tls_version
         self.ciphers = ciphers
-

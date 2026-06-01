@@ -39,20 +39,20 @@ PY
 
 - Format:
 
-  black .
+  `uv run black src/ examples/ tests/`
 
 - Type check:
 
-  mypy src tests
+  `uv run mypy src tests`
 
 - Run tests:
 
-  pytest -q
+  `uv run pytest`
 
 - Build and publish:
 
-  uv build
-  uv publish
+  `uv build`
+  `uv publish`
 
 ## Agent workflow guidance (implementation notes)
 - Always verify the working tree is clean before making changes. Abort and ask the user to commit or stash if not.

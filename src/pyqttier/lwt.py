@@ -1,6 +1,6 @@
-
 from .message import Message
 from dataclasses import dataclass
+
 
 @dataclass
 class OnlinePresence:

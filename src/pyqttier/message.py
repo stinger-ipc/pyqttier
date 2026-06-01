@@ -4,6 +4,7 @@ from paho.mqtt.client import MQTTMessage
 from paho.mqtt.properties import Properties as MqttProperties
 from paho.mqtt.packettypes import PacketTypes
 
+
 @dataclass
 class Message:
     topic: str
@@ -64,6 +65,10 @@ class Message:
         if "MessageExpiryInterval" in properties:
             msg_obj.message_expiry_interval = properties["MessageExpiryInterval"]
         if "SubscriptionIdentifier" in properties:
-            sub_ids = properties["SubscriptionIdentifier"] if isinstance(properties["SubscriptionIdentifier"], list) else [properties["SubscriptionIdentifier"]]
+            sub_ids = (
+                properties["SubscriptionIdentifier"]
+                if isinstance(properties["SubscriptionIdentifier"], list)
+                else [properties["SubscriptionIdentifier"]]
+            )
             msg_obj.subscription_ids = sub_ids
         return msg_obj
