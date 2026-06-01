@@ -26,7 +26,11 @@ from pyqttier.transport import MqttTransport, MqttTransportType
 from pyqttier.message import Message
 
 # Connect to broker
-transport = MqttTransport(MqttTransportType.TCP, host="localhost", port=1883)
+transport = MqttTransport(
+    transport_type=MqttTransportType.TCP,
+    host="localhost",
+    port=1883,
+)
 conn = Mqtt5Connection(transport=transport, client_id="my-client")
 
 # Subscribe to a topic
@@ -50,7 +54,8 @@ from pyqttier.message import Message
 conn = MockConnection()
 
 # Publish and verify
-conn.publish(Message(topic="test", payload=b"data", qos=1))
+result = conn.publish(Message(topic="test", payload=b"data", qos=1))
+assert result.done()
 assert len(conn.published_messages) == 1
 assert conn.published_messages[0].topic == "test"
 ```

@@ -64,6 +64,7 @@ class Mqtt5Connection(IBrokerConnection):
         with self._publishing_lock:
             self._publish_futures = dict()  # type: Dict[int, Future]
 
+        self._logger.debug("Starting MQTT client loop")
         self._client.loop_start()
         self._next_subscription_id = 10
 
@@ -94,9 +95,12 @@ class Mqtt5Connection(IBrokerConnection):
                 ciphers=self._transport.ciphers,
             )
         host = self._transport.host_or_path or "localhost"
-        self._client.connect(host, self._transport.port)
+        # Use connect_async to avoid blocking on initial connection failure
+        # The reconnect_on_failure=True will handle retries
+        self._client.connect_async(host, self._transport.port)
 
     def __del__(self):
+        self._logger.debug("Destructor called for MqttConnection %s", self._client_id)
         if self._lwt is not None:
             self._client.publish(**self._lwt.offline.paho_kwargs()).wait_for_publish()
         self._client.disconnect()
@@ -181,10 +185,13 @@ class Mqtt5Connection(IBrokerConnection):
     def on_publish_complete(
         self, client, userdata, mid, reason_code=None, properties=None
     ):
+        self._logger.debug("Publish complete for message ID %d", mid)
         with self._publishing_lock:
             if mid in self._publish_futures:
                 fut = self._publish_futures.pop(mid)
-                fut.set_result(None)
+                fut.set_result(True)
+            else:
+                self._logger.warning("Received publish complete for unknown message ID %d", mid)
 
     def publish(self, message: Message) -> Future:
         """Publish a message to mqtt, or queue it if not connected yet.  Returns a Future that completes when the message is published."""
