@@ -22,11 +22,11 @@ class TestMockConnection(unittest.TestCase):
         """Test publishing a message."""
         msg = Message(topic="test/topic", payload=b"hello", qos=1)
         future = self.conn.publish(msg)
-        
+
         # Future should be immediately resolved
         self.assertTrue(future.done())
         self.assertIsNone(future.result())
-        
+
         # Message should be recorded
         published = self.conn.published_messages
         self.assertEqual(len(published), 1)
@@ -38,7 +38,7 @@ class TestMockConnection(unittest.TestCase):
         for i in range(5):
             msg = Message(topic=f"test/{i}", payload=f"msg{i}".encode(), qos=0)
             self.conn.publish(msg)
-        
+
         published = self.conn.published_messages
         self.assertEqual(len(published), 5)
         self.assertEqual(published[2].topic, "test/2")
@@ -48,7 +48,7 @@ class TestMockConnection(unittest.TestCase):
         msg = Message(topic="test", payload=b"test", qos=0)
         self.conn.publish(msg)
         self.assertEqual(len(self.conn.published_messages), 1)
-        
+
         self.conn.clear_published_messages()
         self.assertEqual(len(self.conn.published_messages), 0)
 
@@ -61,16 +61,16 @@ class TestMockConnection(unittest.TestCase):
     def test_subscribe_with_callback(self):
         """Test subscription with callback."""
         received_messages = []
-        
+
         def callback(msg: Message):
             received_messages.append(msg)
-        
+
         sub_id = self.conn.subscribe("test/topic", callback)
-        
+
         # Simulate receiving a message
         msg = Message(topic="test/topic", payload=b"hello", qos=0)
         self.conn.simulate_message(msg)
-        
+
         # Callback should have been called
         self.assertEqual(len(received_messages), 1)
         self.assertEqual(received_messages[0].topic, "test/topic")
@@ -81,13 +81,13 @@ class TestMockConnection(unittest.TestCase):
         """Test multiple subscriptions with different callbacks."""
         topic1_messages = []
         topic2_messages = []
-        
+
         sub1 = self.conn.subscribe("topic/1", lambda msg: topic1_messages.append(msg))
         sub2 = self.conn.subscribe("topic/2", lambda msg: topic2_messages.append(msg))
-        
+
         self.conn.simulate_message(Message(topic="topic/1", payload=b"msg1", qos=0))
         self.conn.simulate_message(Message(topic="topic/2", payload=b"msg2", qos=0))
-        
+
         self.assertEqual(len(topic1_messages), 1)
         self.assertEqual(len(topic2_messages), 1)
         self.assertEqual(topic1_messages[0].payload, b"msg1")
@@ -96,19 +96,19 @@ class TestMockConnection(unittest.TestCase):
     def test_add_message_callback(self):
         """Test adding a global message callback."""
         received_messages = []
-        
+
         def callback(msg: Message):
             received_messages.append(msg)
-        
+
         self.conn.add_message_callback(callback)
-        
+
         # Subscribe without a callback
         self.conn.subscribe("test/topic")
-        
+
         # Simulate a message - should go to global callback
         msg = Message(topic="test/topic", payload=b"global", qos=0)
         self.conn.simulate_message(msg)
-        
+
         self.assertEqual(len(received_messages), 1)
         self.assertEqual(received_messages[0].payload, b"global")
 
@@ -116,13 +116,17 @@ class TestMockConnection(unittest.TestCase):
         """Test that subscription callbacks take priority over global callbacks."""
         subscription_messages = []
         global_messages = []
-        
-        self.conn.subscribe("specific/topic", lambda msg: subscription_messages.append(msg))
+
+        self.conn.subscribe(
+            "specific/topic", lambda msg: subscription_messages.append(msg)
+        )
         self.conn.add_message_callback(lambda msg: global_messages.append(msg))
-        
+
         # Message matching subscription should only go to subscription callback
-        self.conn.simulate_message(Message(topic="specific/topic", payload=b"test", qos=0))
-        
+        self.conn.simulate_message(
+            Message(topic="specific/topic", payload=b"test", qos=0)
+        )
+
         self.assertEqual(len(subscription_messages), 1)
         self.assertEqual(len(global_messages), 0)
 
@@ -148,10 +152,10 @@ class TestMockConnection(unittest.TestCase):
     def test_set_connected(self):
         """Test changing connection status."""
         self.assertTrue(self.conn.is_connected())
-        
+
         self.conn.set_connected(False)
         self.assertFalse(self.conn.is_connected())
-        
+
         self.conn.set_connected(True)
         self.assertTrue(self.conn.is_connected())
 
@@ -159,23 +163,24 @@ class TestMockConnection(unittest.TestCase):
         """Test unsubscribing."""
         sub_id = self.conn.subscribe("test/topic")
         self.assertEqual(self.conn.get_subscription_count(), 1)
-        
+
         self.conn.unsubscribe(sub_id)
         self.assertEqual(self.conn.get_subscription_count(), 0)
 
     def test_thread_safety(self):
         """Test thread safety of mock connection."""
+
         def publish_worker():
             for i in range(10):
                 msg = Message(topic=f"thread/test/{i}", payload=b"test", qos=0)
                 self.conn.publish(msg)
-        
+
         threads = [threading.Thread(target=publish_worker) for _ in range(5)]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         # Should have 50 messages total
         self.assertEqual(len(self.conn.published_messages), 50)
 
@@ -186,9 +191,7 @@ class TestMqttTransport(unittest.TestCase):
     def test_tcp_transport(self):
         """Test TCP transport configuration."""
         transport = MqttTransport(
-            transport_type=MqttTransportType.TCP,
-            host="localhost",
-            port=1883
+            transport_type=MqttTransportType.TCP, host="localhost", port=1883
         )
         self.assertEqual(transport.transport, MqttTransportType.TCP)
         self.assertEqual(transport.host_or_path, "localhost")
@@ -197,8 +200,7 @@ class TestMqttTransport(unittest.TestCase):
     def test_tcp_transport_default_port(self):
         """Test TCP transport with default port."""
         transport = MqttTransport(
-            transport_type=MqttTransportType.TCP,
-            host="broker.example.com"
+            transport_type=MqttTransportType.TCP, host="broker.example.com"
         )
         self.assertEqual(transport.host_or_path, "broker.example.com")
         self.assertEqual(transport.port, 1883)
@@ -206,9 +208,7 @@ class TestMqttTransport(unittest.TestCase):
     def test_websocket_transport(self):
         """Test WebSocket transport configuration."""
         transport = MqttTransport(
-            transport_type=MqttTransportType.WEBSOCKET,
-            host="ws.example.com",
-            port=8080
+            transport_type=MqttTransportType.WEBSOCKET, host="ws.example.com", port=8080
         )
         self.assertEqual(transport.transport, MqttTransportType.WEBSOCKET)
         self.assertEqual(transport.host_or_path, "ws.example.com")
@@ -217,8 +217,7 @@ class TestMqttTransport(unittest.TestCase):
     def test_unix_socket_transport(self):
         """Test Unix socket transport configuration."""
         transport = MqttTransport(
-            transport_type=MqttTransportType.UNIX,
-            socket_path="/var/run/mqtt.sock"
+            transport_type=MqttTransportType.UNIX, socket_path="/var/run/mqtt.sock"
         )
         self.assertEqual(transport.transport, MqttTransportType.UNIX)
         self.assertEqual(transport.host_or_path, "/var/run/mqtt.sock")
@@ -231,29 +230,29 @@ class TestInterface(unittest.TestCase):
     def test_mock_implements_interface(self):
         """Test that MockConnection implements all interface methods."""
         from pyqttier.interface import IBrokerConnection
-        
+
         conn = MockConnection()
         self.assertIsInstance(conn, IBrokerConnection)
-        
+
         # Verify all abstract methods are implemented
-        self.assertTrue(callable(getattr(conn, 'publish', None)))
-        self.assertTrue(callable(getattr(conn, 'subscribe', None)))
-        self.assertTrue(callable(getattr(conn, 'add_message_callback', None)))
-        self.assertTrue(callable(getattr(conn, 'is_topic_sub', None)))
-        self.assertTrue(callable(getattr(conn, 'is_connected', None)))
+        self.assertTrue(callable(getattr(conn, "publish", None)))
+        self.assertTrue(callable(getattr(conn, "subscribe", None)))
+        self.assertTrue(callable(getattr(conn, "add_message_callback", None)))
+        self.assertTrue(callable(getattr(conn, "is_topic_sub", None)))
+        self.assertTrue(callable(getattr(conn, "is_connected", None)))
 
     def test_unpublish_retained(self):
         """Test the unpublish_retained helper method."""
         conn = MockConnection()
         conn.unpublish_retained("test/topic")
-        
+
         published = conn.published_messages
         self.assertEqual(len(published), 1)
         self.assertEqual(published[0].topic, "test/topic")
-        self.assertEqual(published[0].payload, b'')
+        self.assertEqual(published[0].payload, b"")
         self.assertTrue(published[0].retain)
         self.assertEqual(published[0].qos, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
