@@ -17,7 +17,8 @@ class MockConnection(IBrokerConnection):
         self._connected = True
         self._subscriptions = (
             {}
-        )  # type: Dict[int, Tuple[str, Optional[MessageCallback]]]
+        )  # type: Dict[int, Tuple[str, List[MessageCallback]]]
+        self._topic_to_sub_id = {}  # type: Dict[str, int]
         self._message_callbacks = []  # type: List[MessageCallback]
         self._published_messages = []  # type: List[Message]
         self._next_subscription_id = 1  # type: int
@@ -75,12 +76,13 @@ class MockConnection(IBrokerConnection):
         self._logger.debug("Simulating incoming message on topic: %s", message.topic)
         with self._lock:
             # Check subscription-specific callbacks
-            for sub_id, (topic_filter, callback) in self._subscriptions.items():
+            for sub_id, (topic_filter, callbacks) in self._subscriptions.items():
                 if self.is_topic_sub(message.topic, topic_filter):
-                    if callback is not None:
+                    if callbacks:
                         receiving_msg = copy(message)
                         receiving_msg.subscription_ids = [sub_id]
-                        callback(receiving_msg)
+                        for callback in callbacks:
+                            callback(receiving_msg)
                         return
 
             # If no specific callback matched, call general message callbacks
@@ -110,9 +112,15 @@ class MockConnection(IBrokerConnection):
         """
         self._logger.debug("Subscribe to topic: %s", topic)
         with self._lock:
+            if topic in self._topic_to_sub_id:
+                sub_id = self._topic_to_sub_id[topic]
+                if callback is not None:
+                    self._subscriptions[sub_id][1].append(callback)
+                return sub_id
             sub_id = self._next_subscription_id
             self._next_subscription_id += 1
-            self._subscriptions[sub_id] = (topic, callback)
+            self._subscriptions[sub_id] = (topic, [callback] if callback is not None else [])
+            self._topic_to_sub_id[topic] = sub_id
             return sub_id
 
     def add_message_callback(self, callback: MessageCallback) -> None:

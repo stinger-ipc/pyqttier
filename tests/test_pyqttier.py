@@ -254,5 +254,88 @@ class TestInterface(unittest.TestCase):
         self.assertEqual(published[0].qos, 1)
 
 
+class TestMockConnectionMultipleCallbacks(unittest.TestCase):
+    """Test MockConnection multi-callback subscription behaviour."""
+
+    def setUp(self):
+        self.conn = MockConnection()
+
+    def test_same_topic_returns_same_sub_id(self):
+        """Re-subscribing to the same topic returns the same subscription ID."""
+        sub_id1 = self.conn.subscribe("test/topic")
+        sub_id2 = self.conn.subscribe("test/topic")
+        self.assertEqual(sub_id1, sub_id2)
+
+    def test_same_topic_does_not_create_extra_subscription(self):
+        """Re-subscribing to the same topic keeps the subscription count at 1."""
+        self.conn.subscribe("test/topic")
+        self.conn.subscribe("test/topic")
+        self.assertEqual(self.conn.get_subscription_count(), 1)
+
+    def test_multiple_callbacks_all_invoked(self):
+        """All callbacks registered for a topic are called when a message arrives."""
+        received_a = []
+        received_b = []
+
+        sub_id1 = self.conn.subscribe("test/topic", lambda msg: received_a.append(msg))
+        sub_id2 = self.conn.subscribe("test/topic", lambda msg: received_b.append(msg))
+
+        self.assertEqual(sub_id1, sub_id2)
+
+        self.conn.simulate_message(Message(topic="test/topic", payload=b"hello", qos=0))
+
+        self.assertEqual(len(received_a), 1)
+        self.assertEqual(len(received_b), 1)
+        self.assertEqual(received_a[0].payload, b"hello")
+        self.assertEqual(received_b[0].payload, b"hello")
+
+    def test_multiple_callbacks_correct_subscription_id(self):
+        """Messages delivered to multi-callback subscriptions carry the correct sub ID."""
+        received = []
+        sub_id = self.conn.subscribe("test/topic", lambda msg: received.append(msg))
+        self.conn.subscribe("test/topic", lambda msg: received.append(msg))
+
+        self.conn.simulate_message(Message(topic="test/topic", payload=b"x", qos=0))
+
+        for msg in received:
+            self.assertEqual(msg.subscription_ids, [sub_id])
+
+    def test_three_callbacks_all_invoked(self):
+        """Three callbacks on the same topic are all invoked once per message."""
+        counts = [0, 0, 0]
+        self.conn.subscribe("a/b", lambda msg: counts.__setitem__(0, counts[0] + 1))
+        self.conn.subscribe("a/b", lambda msg: counts.__setitem__(1, counts[1] + 1))
+        self.conn.subscribe("a/b", lambda msg: counts.__setitem__(2, counts[2] + 1))
+
+        self.conn.simulate_message(Message(topic="a/b", payload=b"", qos=0))
+
+        self.assertEqual(counts, [1, 1, 1])
+
+    def test_callback_added_without_prior_callback(self):
+        """A callback added to a subscription that was created without one is called."""
+        received = []
+        self.conn.subscribe("test/topic")  # no callback
+        self.conn.subscribe("test/topic", lambda msg: received.append(msg))
+
+        self.conn.simulate_message(Message(topic="test/topic", payload=b"hi", qos=0))
+
+        self.assertEqual(len(received), 1)
+
+    def test_independent_topics_unaffected(self):
+        """Adding callbacks to one topic does not affect delivery to another topic."""
+        topic1_msgs = []
+        topic2_msgs = []
+
+        self.conn.subscribe("t/1", lambda msg: topic1_msgs.append(msg))
+        self.conn.subscribe("t/1", lambda msg: topic1_msgs.append(msg))
+        self.conn.subscribe("t/2", lambda msg: topic2_msgs.append(msg))
+
+        self.conn.simulate_message(Message(topic="t/1", payload=b"one", qos=0))
+        self.conn.simulate_message(Message(topic="t/2", payload=b"two", qos=0))
+
+        self.assertEqual(len(topic1_msgs), 2)  # two callbacks on t/1
+        self.assertEqual(len(topic2_msgs), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -18,9 +18,10 @@ Automate a standard Python release workflow for the `pyqttier` project.
 3. Run `black` across the repository.
 4. Run `mypy` type checks.
 5. Run unit tests (e.g., `pytest`).
-6. If all of the above succeed, prompt the user: "Commit and tag the release?" If yes, create a commit and annotated tag.
-7. Run `uv build` and report the build result.
-8. Prompt the user: "Publish with `uv publish` now?" If yes, run `uv publish`.
+6. Run the smoke test against a live broker (`examples/smoke_test.py`). Requires an MQTT broker on `localhost:1883`; abort the release if it is unreachable or any scenario fails.
+7. If all of the above succeed, prompt the user: "Commit and tag the release?" If yes, create a commit and annotated tag.
+8. Run `uv build` and report the build result.
+9. Prompt the user: "Publish with `uv publish` now?" If yes, run `uv publish`.
 
 ## Commands (examples)
 - Check git status:
@@ -49,6 +50,10 @@ PY
 
   `uv run pytest`
 
+- Run smoke test (requires a broker on `localhost:1883`):
+  `uv pip install .`
+  `uv run examples/smoke_test.py`
+
 - Build and publish:
 
   `uv build`
@@ -60,6 +65,7 @@ PY
 - Update `pyproject.toml` in-place and commit only the `pyproject.toml` change alongside any generated `CHANGELOG.md` if you add it.
 - Use `black` first so `mypy` sees formatted source.
 - Fail fast: stop at the first failing check and show the user the output.
+- The smoke test (`examples/smoke_test.py`) needs a live MQTT broker on `localhost:1883`. Before running it, check whether a broker is reachable; if not, tell the user and let them start one (e.g., `docker run --rm -p 1883:1883 eclipse-mosquitto`) or skip the smoke test with explicit confirmation. The smoke test exits non-zero if the broker is unreachable or any scenario fails.
 - If all checks pass, show a summarized list of actions to be performed (commit message, tag name) and get confirmation before performing git operations.
 - After tagging and committing, run `uv build`. If `uv build` succeeds, ask the user whether to run `uv publish`.
 
