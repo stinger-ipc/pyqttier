@@ -15,9 +15,7 @@ class MockConnection(IBrokerConnection):
 
     def __init__(self):
         self._connected = True
-        self._subscriptions = (
-            {}
-        )  # type: Dict[int, Tuple[str, List[MessageCallback]]]
+        self._subscriptions = {}  # type: Dict[int, Tuple[str, List[MessageCallback]]]
         self._topic_to_sub_id = {}  # type: Dict[str, int]
         self._message_callbacks = []  # type: List[MessageCallback]
         self._published_messages = []  # type: List[Message]
@@ -119,7 +117,10 @@ class MockConnection(IBrokerConnection):
                 return sub_id
             sub_id = self._next_subscription_id
             self._next_subscription_id += 1
-            self._subscriptions[sub_id] = (topic, [callback] if callback is not None else [])
+            self._subscriptions[sub_id] = (
+                topic,
+                [callback] if callback is not None else [],
+            )
             self._topic_to_sub_id[topic] = sub_id
             return sub_id
 

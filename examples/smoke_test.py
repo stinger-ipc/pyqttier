@@ -35,13 +35,14 @@ HOSTNAME = os.getenv("MQTT_HOSTNAME", "localhost")
 PORT = int(os.getenv("MQTT_PORT", "1883"))
 
 CONNECT_TIMEOUT = 5.0  # seconds to wait for broker connection
-MSG_TIMEOUT = 5.0      # seconds to wait for a message to arrive
+MSG_TIMEOUT = 5.0  # seconds to wait for a message to arrive
 
 # Unique run prefix so consecutive runs never interfere via retained messages.
 RUN_ID = str(int(time.time() * 1000))[-8:]
 
 
 # ── Utilities ──────────────────────────────────────────────────────────────────
+
 
 class Collector:
     """Thread-safe message collector usable directly as an MQTT callback."""
@@ -139,6 +140,7 @@ def run_scenario(name: str, fn: Callable[[], None]) -> None:
 
 # ── Scenario 1: Two-way pub/sub ────────────────────────────────────────────────
 
+
 def scenario_two_way_pubsub() -> None:
     """Client A and B exchange messages in both directions."""
     a = connect(f"smoke-{RUN_ID}-a-twoway")
@@ -155,10 +157,12 @@ def scenario_two_way_pubsub() -> None:
         publish_sync(a, Message(topic=f"{prefix}/to-b", payload=b"hello-from-a", qos=1))
         publish_sync(b, Message(topic=f"{prefix}/to-a", payload=b"hello-from-b", qos=1))
 
-        assert b_inbox.wait_for(lambda: len(b_inbox.messages) >= 1), \
-            "B did not receive message from A"
-        assert a_inbox.wait_for(lambda: len(a_inbox.messages) >= 1), \
-            "A did not receive message from B"
+        assert b_inbox.wait_for(
+            lambda: len(b_inbox.messages) >= 1
+        ), "B did not receive message from A"
+        assert a_inbox.wait_for(
+            lambda: len(a_inbox.messages) >= 1
+        ), "A did not receive message from B"
         assert b_inbox.messages[0].payload == b"hello-from-a"
         assert a_inbox.messages[0].payload == b"hello-from-b"
     finally:
@@ -166,6 +170,7 @@ def scenario_two_way_pubsub() -> None:
 
 
 # ── Scenario 2: Per-subscription vs global callback ───────────────────────────
+
 
 def scenario_per_subscription_vs_global_callback() -> None:
     """
@@ -189,10 +194,12 @@ def scenario_per_subscription_vs_global_callback() -> None:
         publish_sync(b, Message(topic=f"{prefix}/x", payload=b"msg-x", qos=1))
         publish_sync(b, Message(topic=f"{prefix}/y", payload=b"msg-y", qos=1))
 
-        assert coll_x.wait_for(lambda: len(coll_x.messages) >= 1), \
-            "Specific callback for /x was not called"
-        assert coll_y.wait_for(lambda: len(coll_y.messages) >= 1), \
-            "Specific callback for /y was not called"
+        assert coll_x.wait_for(
+            lambda: len(coll_x.messages) >= 1
+        ), "Specific callback for /x was not called"
+        assert coll_y.wait_for(
+            lambda: len(coll_y.messages) >= 1
+        ), "Specific callback for /y was not called"
         assert coll_x.messages[0].payload == b"msg-x"
         assert coll_y.messages[0].payload == b"msg-y"
 
@@ -208,6 +215,7 @@ def scenario_per_subscription_vs_global_callback() -> None:
 
 # ── Scenario 3: Wildcard subscriptions ────────────────────────────────────────
 
+
 def scenario_wildcard_subscriptions() -> None:
     """Single-level (+) and multi-level (#) wildcard subscriptions work correctly."""
     a = connect(f"smoke-{RUN_ID}-a-wildcards")
@@ -222,26 +230,31 @@ def scenario_wildcard_subscriptions() -> None:
         time.sleep(0.3)
 
         # Should match  smoke/<RUN_ID>/+/temp
-        publish_sync(b, Message(topic=f"{run}/sensor1/temp",       payload=b"22.5", qos=1))
-        publish_sync(b, Message(topic=f"{run}/sensor2/temp",       payload=b"23.1", qos=1))
+        publish_sync(b, Message(topic=f"{run}/sensor1/temp", payload=b"22.5", qos=1))
+        publish_sync(b, Message(topic=f"{run}/sensor2/temp", payload=b"23.1", qos=1))
         # Should NOT match  +/temp  (too many levels)
-        publish_sync(b, Message(topic=f"{run}/sensor1/sub/temp",   payload=b"nope", qos=1))
+        publish_sync(
+            b, Message(topic=f"{run}/sensor1/sub/temp", payload=b"nope", qos=1)
+        )
 
         # Should match  smoke/<RUN_ID>/logs/#
-        publish_sync(b, Message(topic=f"{run}/logs/info",          payload=b"log1", qos=1))
-        publish_sync(b, Message(topic=f"{run}/logs/warn/detail",   payload=b"log2", qos=1))
+        publish_sync(b, Message(topic=f"{run}/logs/info", payload=b"log1", qos=1))
+        publish_sync(
+            b, Message(topic=f"{run}/logs/warn/detail", payload=b"log2", qos=1)
+        )
 
-        assert coll_single.wait_for(lambda: len(coll_single.messages) >= 2), (
-            f"Expected 2 single-wildcard messages, got {len(coll_single.messages)}"
-        )
-        assert coll_multi.wait_for(lambda: len(coll_multi.messages) >= 2), (
-            f"Expected 2 multi-wildcard messages, got {len(coll_multi.messages)}"
-        )
+        assert coll_single.wait_for(
+            lambda: len(coll_single.messages) >= 2
+        ), f"Expected 2 single-wildcard messages, got {len(coll_single.messages)}"
+        assert coll_multi.wait_for(
+            lambda: len(coll_multi.messages) >= 2
+        ), f"Expected 2 multi-wildcard messages, got {len(coll_multi.messages)}"
 
         single_payloads = {m.payload for m in coll_single.messages}
         assert b"22.5" in single_payloads and b"23.1" in single_payloads
-        assert b"nope" not in single_payloads, \
-            "Message with extra level should not match single-level wildcard"
+        assert (
+            b"nope" not in single_payloads
+        ), "Message with extra level should not match single-level wildcard"
 
         multi_payloads = {m.payload for m in coll_multi.messages}
         assert b"log1" in multi_payloads and b"log2" in multi_payloads
@@ -251,17 +264,21 @@ def scenario_wildcard_subscriptions() -> None:
 
 # ── Scenario 4: Retained messages ─────────────────────────────────────────────
 
+
 def scenario_retained_messages() -> None:
     """A retained message is delivered to a new subscriber that connects later."""
     retained_topic = f"smoke/{RUN_ID}/retained"
     publisher = connect(f"smoke-{RUN_ID}-retained-pub")
     try:
-        publish_sync(publisher, Message(
-            topic=retained_topic,
-            payload=b"retained-payload",
-            qos=1,
-            retain=True,
-        ))
+        publish_sync(
+            publisher,
+            Message(
+                topic=retained_topic,
+                payload=b"retained-payload",
+                qos=1,
+                retain=True,
+            ),
+        )
     finally:
         del publisher
         time.sleep(0.2)  # ensure broker has processed the retained message
@@ -270,21 +287,25 @@ def scenario_retained_messages() -> None:
     try:
         coll = Collector()
         subscriber.subscribe(retained_topic, callback=coll)
-        assert coll.wait_for(lambda: len(coll.messages) >= 1), \
-            "New subscriber did not receive retained message"
+        assert coll.wait_for(
+            lambda: len(coll.messages) >= 1
+        ), "New subscriber did not receive retained message"
         assert coll.messages[0].payload == b"retained-payload"
         assert coll.messages[0].retain, "Message should be flagged as retained"
     finally:
         # Clean up: remove retained message so reruns start fresh.
         cleaner = connect(f"smoke-{RUN_ID}-retained-clean")
         try:
-            publish_sync(cleaner, Message(topic=retained_topic, payload=b"", qos=1, retain=True))
+            publish_sync(
+                cleaner, Message(topic=retained_topic, payload=b"", qos=1, retain=True)
+            )
         finally:
             del cleaner
         del subscriber
 
 
 # ── Scenario 5: QoS levels ────────────────────────────────────────────────────
+
 
 def scenario_qos_levels() -> None:
     """Messages published at QoS 0, 1, and 2 are delivered."""
@@ -299,23 +320,29 @@ def scenario_qos_levels() -> None:
         time.sleep(0.3)
 
         for level in (0, 1, 2):
-            publish_sync(b, Message(
-                topic=f"{prefix}/{level}",
-                payload=f"qos-{level}".encode(),
-                qos=level,
-            ))
+            publish_sync(
+                b,
+                Message(
+                    topic=f"{prefix}/{level}",
+                    payload=f"qos-{level}".encode(),
+                    qos=level,
+                ),
+            )
 
         for level in (0, 1, 2):
             coll = colls[level]
-            assert coll.wait_for(lambda c=coll: len(c.messages) >= 1), \
-                f"QoS {level} message was not received"
-            assert coll.messages[0].payload == f"qos-{level}".encode(), \
-                f"QoS {level} payload mismatch: {coll.messages[0].payload!r}"
+            assert coll.wait_for(
+                lambda c=coll: len(c.messages) >= 1
+            ), f"QoS {level} message was not received"
+            assert (
+                coll.messages[0].payload == f"qos-{level}".encode()
+            ), f"QoS {level} payload mismatch: {coll.messages[0].payload!r}"
     finally:
         del a, b
 
 
 # ── Scenario 6: LWT / online presence ─────────────────────────────────────────
+
 
 def scenario_lwt_online_presence() -> None:
     """
@@ -331,10 +358,12 @@ def scenario_lwt_online_presence() -> None:
         subject = connect(f"smoke-{RUN_ID}-lwt-subject")
         online_topic = subject.online_topic
 
-        assert lwt_coll.wait_for(lambda: any(
-            m.topic == online_topic and b'"online":true' in m.payload
-            for m in lwt_coll.messages
-        )), "Did not receive online:true LWT message after connect"
+        assert lwt_coll.wait_for(
+            lambda: any(
+                m.topic == online_topic and b'"online":true' in m.payload
+                for m in lwt_coll.messages
+            )
+        ), "Did not receive online:true LWT message after connect"
 
         # Tear down the connection — Mqtt5Connection publishes the offline
         # presence message in its finalizer.  We invoke it explicitly: paho's
@@ -356,7 +385,9 @@ def scenario_lwt_online_presence() -> None:
         lwt_topic = f"client/smoke-{RUN_ID}-lwt-subject/online"
         cleaner = connect(f"smoke-{RUN_ID}-lwt-clean")
         try:
-            publish_sync(cleaner, Message(topic=lwt_topic, payload=b"", qos=1, retain=True))
+            publish_sync(
+                cleaner, Message(topic=lwt_topic, payload=b"", qos=1, retain=True)
+            )
         finally:
             del cleaner
         del monitor
@@ -364,14 +395,15 @@ def scenario_lwt_online_presence() -> None:
 
 # ── Scenario 7: Request / response ────────────────────────────────────────────
 
+
 def scenario_request_response() -> None:
     """response_topic and correlation_data round-trip through the broker."""
     server = connect(f"smoke-{RUN_ID}-server-reqresp")
     client = connect(f"smoke-{RUN_ID}-client-reqresp")
     try:
         request_topic = f"smoke/{RUN_ID}/request"
-        reply_topic   = f"smoke/{RUN_ID}/reply"
-        correlation   = b"corr-" + RUN_ID.encode()
+        reply_topic = f"smoke/{RUN_ID}/reply"
+        correlation = b"corr-" + RUN_ID.encode()
 
         reply_coll = Collector()
         client.subscribe(reply_topic, callback=reply_coll)
@@ -379,50 +411,61 @@ def scenario_request_response() -> None:
 
         def handle_request(msg: Message) -> None:
             if msg.response_topic and msg.correlation_data is not None:
-                server.publish(Message(
-                    topic=msg.response_topic,
-                    payload=b"pong: " + msg.payload,
-                    qos=1,
-                    correlation_data=msg.correlation_data,
-                ))
+                server.publish(
+                    Message(
+                        topic=msg.response_topic,
+                        payload=b"pong: " + msg.payload,
+                        qos=1,
+                        correlation_data=msg.correlation_data,
+                    )
+                )
 
         server.subscribe(request_topic, callback=handle_request)
         time.sleep(0.2)
 
-        publish_sync(client, Message(
-            topic=request_topic,
-            payload=b"ping",
-            qos=1,
-            response_topic=reply_topic,
-            correlation_data=correlation,
-        ))
-
-        assert reply_coll.wait_for(lambda: len(reply_coll.messages) >= 1), \
-            "No response received"
-        reply = reply_coll.messages[0]
-        assert reply.payload == b"pong: ping", \
-            f"Unexpected response payload: {reply.payload!r}"
-        assert reply.correlation_data == correlation, (
-            f"correlation_data mismatch: {reply.correlation_data!r} != {correlation!r}"
+        publish_sync(
+            client,
+            Message(
+                topic=request_topic,
+                payload=b"ping",
+                qos=1,
+                response_topic=reply_topic,
+                correlation_data=correlation,
+            ),
         )
+
+        assert reply_coll.wait_for(
+            lambda: len(reply_coll.messages) >= 1
+        ), "No response received"
+        reply = reply_coll.messages[0]
+        assert (
+            reply.payload == b"pong: ping"
+        ), f"Unexpected response payload: {reply.payload!r}"
+        assert (
+            reply.correlation_data == correlation
+        ), f"correlation_data mismatch: {reply.correlation_data!r} != {correlation!r}"
     finally:
         del server, client
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     print(f"pyqttier smoke test  —  broker: {HOSTNAME}:{PORT}  —  run-id: {RUN_ID}")
     print()
 
     scenarios = [
-        ("two-way pub/sub",                      scenario_two_way_pubsub),
-        ("per-subscription vs global callback",  scenario_per_subscription_vs_global_callback),
-        ("wildcard subscriptions (+/#)",          scenario_wildcard_subscriptions),
-        ("retained messages",                     scenario_retained_messages),
-        ("QoS levels (0/1/2)",                   scenario_qos_levels),
-        ("LWT / online presence",                scenario_lwt_online_presence),
-        ("request / response",                   scenario_request_response),
+        ("two-way pub/sub", scenario_two_way_pubsub),
+        (
+            "per-subscription vs global callback",
+            scenario_per_subscription_vs_global_callback,
+        ),
+        ("wildcard subscriptions (+/#)", scenario_wildcard_subscriptions),
+        ("retained messages", scenario_retained_messages),
+        ("QoS levels (0/1/2)", scenario_qos_levels),
+        ("LWT / online presence", scenario_lwt_online_presence),
+        ("request / response", scenario_request_response),
     ]
 
     for name, fn in scenarios:
@@ -430,7 +473,7 @@ def main() -> None:
 
     print()
     passed = sum(v for v in _results.values())
-    total  = len(_results)
+    total = len(_results)
     emoji = "✅" if passed == total else "❌"
     print(f"{emoji} Results: {passed}/{total} passed")
     if passed < total:
