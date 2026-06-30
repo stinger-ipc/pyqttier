@@ -28,15 +28,21 @@ Automate a standard Python release workflow for the `pyqttier` project.
 
   git status --porcelain
 
+- View current version:
+
+  `uv version`
+
 - Bump version (patch):
 
-  python - <<PY
-import tomllib, tomli_w
-from pathlib import Path
-p = Path('pyproject.toml')
-proj = tomllib.loads(p.read_text())
-# modify proj['project']['version'] accordingly then write with tomli_w
-PY
+  `uv version --bump=patch`
+
+- Bump version (minor):
+
+  `uv version --bump=minor`
+
+- Bump version (major):
+
+  `uv version --bump=major`
 
 - Format:
 
