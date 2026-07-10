@@ -82,8 +82,8 @@ class TestMockConnection(unittest.TestCase):
         topic1_messages = []
         topic2_messages = []
 
-        sub1 = self.conn.subscribe("topic/1", lambda msg: topic1_messages.append(msg))
-        sub2 = self.conn.subscribe("topic/2", lambda msg: topic2_messages.append(msg))
+        self.conn.subscribe("topic/1", lambda msg: topic1_messages.append(msg))
+        self.conn.subscribe("topic/2", lambda msg: topic2_messages.append(msg))
 
         self.conn.simulate_message(Message(topic="topic/1", payload=b"msg1", qos=0))
         self.conn.simulate_message(Message(topic="topic/2", payload=b"msg2", qos=0))
@@ -335,6 +335,74 @@ class TestMockConnectionMultipleCallbacks(unittest.TestCase):
 
         self.assertEqual(len(topic1_msgs), 2)  # two callbacks on t/1
         self.assertEqual(len(topic2_msgs), 1)
+
+
+class TestMessage(unittest.TestCase):
+    """Test Message class."""
+
+    def test_set_user_property_initializes_dict(self):
+        """Test that set_user_property initializes user_properties when None."""
+        msg = Message(topic="test", payload=b"data", qos=0)
+        # user_properties should be initialized to empty dict in __post_init__
+        self.assertIsNotNone(msg.user_properties)
+        
+        msg.set_user_property("key1", "value1")
+        self.assertEqual(msg.user_properties["key1"], "value1")
+
+    def test_set_user_property_single_property(self):
+        """Test setting a single user property."""
+        msg = Message(topic="test", payload=b"data", qos=0)
+        msg.set_user_property("color", "red")
+        
+        self.assertEqual(len(msg.user_properties), 1)
+        self.assertEqual(msg.user_properties["color"], "red")
+
+    def test_set_user_property_multiple_properties(self):
+        """Test setting multiple user properties."""
+        msg = Message(topic="test", payload=b"data", qos=0)
+        msg.set_user_property("color", "red")
+        msg.set_user_property("size", "large")
+        msg.set_user_property("quantity", "10")
+        
+        self.assertEqual(len(msg.user_properties), 3)
+        self.assertEqual(msg.user_properties["color"], "red")
+        self.assertEqual(msg.user_properties["size"], "large")
+        self.assertEqual(msg.user_properties["quantity"], "10")
+
+    def test_set_user_property_overwrites_existing(self):
+        """Test that set_user_property overwrites existing values."""
+        msg = Message(topic="test", payload=b"data", qos=0)
+        msg.set_user_property("key", "value1")
+        self.assertEqual(msg.user_properties["key"], "value1")
+        
+        msg.set_user_property("key", "value2")
+        self.assertEqual(msg.user_properties["key"], "value2")
+        self.assertEqual(len(msg.user_properties), 1)
+
+    def test_set_user_property_empty_string_value(self):
+        """Test setting a user property with an empty string value."""
+        msg = Message(topic="test", payload=b"data", qos=0)
+        msg.set_user_property("empty", "")
+        
+        self.assertEqual(msg.user_properties["empty"], "")
+
+    def test_set_user_property_special_characters(self):
+        """Test setting user properties with special characters."""
+        msg = Message(topic="test", payload=b"data", qos=0)
+        msg.set_user_property("special-key_123", "value-with-special_chars!@#")
+        
+        self.assertEqual(msg.user_properties["special-key_123"], "value-with-special_chars!@#")
+
+    def test_set_user_property_with_initial_properties(self):
+        """Test set_user_property when initialized with existing properties."""
+        initial_props = {"existing": "value"}
+        msg = Message(topic="test", payload=b"data", qos=0, user_properties=initial_props)
+        
+        msg.set_user_property("new_key", "new_value")
+        
+        self.assertEqual(len(msg.user_properties), 2)
+        self.assertEqual(msg.user_properties["existing"], "value")
+        self.assertEqual(msg.user_properties["new_key"], "new_value")
 
 
 if __name__ == "__main__":

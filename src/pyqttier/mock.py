@@ -1,5 +1,5 @@
 from concurrent.futures import Future
-from typing import Optional, Dict, List, Callable, Tuple
+from typing import Optional, List
 from copy import copy
 from .interface import IBrokerConnection, MessageCallback
 from .message import Message
@@ -13,7 +13,7 @@ class MockConnection(IBrokerConnection):
     Simulates broker behavior without requiring an actual MQTT broker.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._connected = True
         self._subscriptions = {}  # type: Dict[int, Tuple[str, List[MessageCallback]]]
         self._topic_to_sub_id = {}  # type: Dict[str, int]

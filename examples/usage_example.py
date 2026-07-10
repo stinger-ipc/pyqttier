@@ -283,7 +283,7 @@ def example_request_response():
                 correlation_data=msg.correlation_data,
                 content_type="application/json",
             )
-            device_conn.publish(response)
+            device_conn.publish(response)  # noqa: F821 - closure over enclosing `device_conn`, deleted only after use
             print(f"↩️  Sent response to {msg.response_topic}")
 
     device_conn.subscribe("device/commands", callback=on_command)
@@ -327,7 +327,7 @@ def example_request_response():
     time.sleep(1)
 
     if responses:
-        print(f"\n✓ Request-response completed successfully!")
+        print("\n✓ Request-response completed successfully!")
 
     del device_conn
     del client_conn

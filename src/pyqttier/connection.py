@@ -2,7 +2,7 @@ from concurrent.futures import Future
 import logging
 import threading
 import uuid
-from typing import Callable, Optional, Tuple, Any, Union, List, Dict
+from typing import Optional, Tuple
 from paho.mqtt.client import Client as MqttClient, topic_matches_sub
 from paho.mqtt.enums import MQTTProtocolVersion, CallbackAPIVersion
 from paho.mqtt.properties import Properties as MqttProperties
@@ -187,7 +187,7 @@ class Mqtt5Connection(IBrokerConnection):
                 except Empty:
                     break
                 else:
-                    self._logger.info(f"Publishing queued up message")
+                    self._logger.info("Publishing queued up message")
                     pub_info = self._client.publish(**msg.msg.paho_kwargs())
                     with self._publishing_lock:
                         self._publish_futures[pub_info.mid] = msg.future

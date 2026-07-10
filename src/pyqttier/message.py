@@ -22,6 +22,11 @@ class Message:
         if self.user_properties is None:
             self.user_properties = dict()
 
+    def set_user_property(self, key: str, value: str) -> None:
+        if self.user_properties is None:
+            self.user_properties = dict()
+        self.user_properties[key] = value
+
     def paho_kwargs(self) -> Dict[str, Any]:
         props = MqttProperties(PacketTypes.PUBLISH)
         if self.content_type is not None:

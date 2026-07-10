@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, Any, Union, Optional
+from typing import Callable, Optional
 from .message import Message
 from concurrent.futures import Future
 

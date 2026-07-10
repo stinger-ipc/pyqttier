@@ -23,7 +23,7 @@ import os
 import sys
 import time
 import threading
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from pyqttier.connection import Mqtt5Connection
 from pyqttier.message import Message
@@ -411,7 +411,7 @@ def scenario_request_response() -> None:
 
         def handle_request(msg: Message) -> None:
             if msg.response_topic and msg.correlation_data is not None:
-                server.publish(
+                server.publish(  # noqa: F821 - closure over enclosing `server`, deleted only after use
                     Message(
                         topic=msg.response_topic,
                         payload=b"pong: " + msg.payload,

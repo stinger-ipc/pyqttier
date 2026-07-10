@@ -32,7 +32,7 @@ def example_basic_publish_subscribe():
 
     # Publish a message
     msg = Message(topic="sensors/temperature", payload=b"23.5", qos=1, retain=False)
-    fut = conn.publish(msg)
+    conn.publish(msg)
     print(f"📤 Published temperature reading: {msg.payload.decode()}°C")
 
     assert len(conn.published_messages) == 1, "Should have one published message"
