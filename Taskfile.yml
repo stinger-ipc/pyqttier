@@ -33,3 +33,8 @@ tasks:
     desc: Lint code with ruff
     cmds:
       - uv run ruff check src tests examples
+
+  sync:
+    desc: Sync dependencies with uv
+    cmds:
+      - uv sync
