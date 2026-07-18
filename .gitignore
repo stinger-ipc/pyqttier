@@ -148,3 +148,4 @@ cython_debug/
 # Project specific
 check_py37_compat.py
 PYTHON37_COMPAT.md
+.infisical.json
