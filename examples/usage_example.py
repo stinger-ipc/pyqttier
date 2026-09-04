@@ -283,7 +283,9 @@ def example_request_response():
                 correlation_data=msg.correlation_data,
                 content_type="application/json",
             )
-            device_conn.publish(response)  # noqa: F821 - closure over enclosing `device_conn`, deleted only after use
+            device_conn.publish(
+                response
+            )  # noqa: F821 - closure over enclosing `device_conn`, deleted only after use
             print(f"↩️  Sent response to {msg.response_topic}")
 
     device_conn.subscribe("device/commands", callback=on_command)

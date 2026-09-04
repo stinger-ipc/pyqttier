@@ -13,7 +13,7 @@ class TestMessage(unittest.TestCase):
         msg = Message(topic="test", payload=b"data", qos=0)
         # user_properties should be initialized to empty dict in __post_init__
         self.assertIsNotNone(msg.user_properties)
-        
+
         msg.set_user_property("key1", "value1")
         self.assertEqual(msg.user_properties["key1"], "value1")
 
@@ -21,7 +21,7 @@ class TestMessage(unittest.TestCase):
         """Test setting a single user property."""
         msg = Message(topic="test", payload=b"data", qos=0)
         msg.set_user_property("color", "red")
-        
+
         self.assertEqual(len(msg.user_properties), 1)
         self.assertEqual(msg.user_properties["color"], "red")
 
@@ -31,7 +31,7 @@ class TestMessage(unittest.TestCase):
         msg.set_user_property("color", "red")
         msg.set_user_property("size", "large")
         msg.set_user_property("quantity", "10")
-        
+
         self.assertEqual(len(msg.user_properties), 3)
         self.assertEqual(msg.user_properties["color"], "red")
         self.assertEqual(msg.user_properties["size"], "large")
@@ -42,7 +42,7 @@ class TestMessage(unittest.TestCase):
         msg = Message(topic="test", payload=b"data", qos=0)
         msg.set_user_property("key", "value1")
         self.assertEqual(msg.user_properties["key"], "value1")
-        
+
         msg.set_user_property("key", "value2")
         self.assertEqual(msg.user_properties["key"], "value2")
         self.assertEqual(len(msg.user_properties), 1)
@@ -51,23 +51,27 @@ class TestMessage(unittest.TestCase):
         """Test setting a user property with an empty string value."""
         msg = Message(topic="test", payload=b"data", qos=0)
         msg.set_user_property("empty", "")
-        
+
         self.assertEqual(msg.user_properties["empty"], "")
 
     def test_set_user_property_special_characters(self):
         """Test setting user properties with special characters."""
         msg = Message(topic="test", payload=b"data", qos=0)
         msg.set_user_property("special-key_123", "value-with-special_chars!@#")
-        
-        self.assertEqual(msg.user_properties["special-key_123"], "value-with-special_chars!@#")
+
+        self.assertEqual(
+            msg.user_properties["special-key_123"], "value-with-special_chars!@#"
+        )
 
     def test_set_user_property_with_initial_properties(self):
         """Test set_user_property when initialized with existing properties."""
         initial_props = {"existing": "value"}
-        msg = Message(topic="test", payload=b"data", qos=0, user_properties=initial_props)
-        
+        msg = Message(
+            topic="test", payload=b"data", qos=0, user_properties=initial_props
+        )
+
         msg.set_user_property("new_key", "new_value")
-        
+
         self.assertEqual(len(msg.user_properties), 2)
         self.assertEqual(msg.user_properties["existing"], "value")
         self.assertEqual(msg.user_properties["new_key"], "new_value")
@@ -141,7 +145,9 @@ class TestMessage(unittest.TestCase):
         msg.set_user_property("k2", "v2")
 
         props = msg.paho_kwargs()["properties"]
-        self.assertEqual(sorted(props.UserProperty), sorted([("k1", "v1"), ("k2", "v2")]))
+        self.assertEqual(
+            sorted(props.UserProperty), sorted([("k1", "v1"), ("k2", "v2")])
+        )
 
     def test_paho_kwargs_empty_user_properties_omitted(self):
         """Test that empty user_properties do not set UserProperty on the properties object."""
