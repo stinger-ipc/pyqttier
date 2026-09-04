@@ -2,7 +2,7 @@ from concurrent.futures import Future
 import logging
 import threading
 import uuid
-from typing import Optional, Tuple, Dict, List, Union, Literal
+from typing import Optional, Tuple, Dict, List, Union
 from paho.mqtt.client import Client as MqttClient, topic_matches_sub
 from paho.mqtt.enums import MQTTProtocolVersion, CallbackAPIVersion
 from paho.mqtt.properties import Properties as MqttProperties
@@ -34,7 +34,9 @@ class Mqtt5Connection(IBrokerConnection):
         self,
         transport: MqttTransport,
         client_id: Optional[str] = None,
-        lwt: Union[Literal[False], Optional[OnlinePresence]] = None, # False means that no online presence or LWT should be used
+        lwt: Union[
+            bool, Optional[OnlinePresence]
+        ] = None,  # False means that no online presence or LWT should be used and True means use default
         credentials: Optional[Tuple[str, str]] = None,
     ):
         self._logger = logging.getLogger("MqttConnection")
@@ -52,8 +54,10 @@ class Mqtt5Connection(IBrokerConnection):
         lwt_properties.ContentType = "application/json"
         lwt_properties.MessageExpiryInterval = 60 * 60 * 24  # 1 day
         self._lwt = (
-            lwt if lwt is not None else OnlinePresence.default(self._client_id)
-        )  # type: Union[Literal[False], OnlinePresence]
+            OnlinePresence.default(self._client_id)
+            if lwt is True or lwt is None
+            else lwt
+        )  # type: Union[bool, OnlinePresence]
 
         self._connect_inner_mqtt_client()
 
@@ -117,7 +121,7 @@ class Mqtt5Connection(IBrokerConnection):
 
     @property
     def online_topic(self) -> Optional[str]:
-        return self._lwt.topic if self._lwt else None
+        return self._lwt.topic if self._lwt else None  # type: ignore[union-attr]
 
     @property
     def client_id(self) -> str:
