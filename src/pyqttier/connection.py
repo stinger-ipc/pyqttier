@@ -2,7 +2,7 @@ from concurrent.futures import Future
 import logging
 import threading
 import uuid
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, List, Union, Literal
 from paho.mqtt.client import Client as MqttClient, topic_matches_sub
 from paho.mqtt.enums import MQTTProtocolVersion, CallbackAPIVersion
 from paho.mqtt.properties import Properties as MqttProperties
@@ -34,7 +34,7 @@ class Mqtt5Connection(IBrokerConnection):
         self,
         transport: MqttTransport,
         client_id: Optional[str] = None,
-        lwt: Optional[OnlinePresence] = None,
+        lwt: Union[Literal[False], Optional[OnlinePresence]] = None, # False means that no online presence or LWT should be used
         credentials: Optional[Tuple[str, str]] = None,
     ):
         self._logger = logging.getLogger("MqttConnection")
@@ -51,7 +51,9 @@ class Mqtt5Connection(IBrokerConnection):
         lwt_properties = MqttProperties(PacketTypes.PUBLISH)
         lwt_properties.ContentType = "application/json"
         lwt_properties.MessageExpiryInterval = 60 * 60 * 24  # 1 day
-        self._lwt = lwt or OnlinePresence.default(self._client_id)
+        self._lwt = (
+            lwt if lwt is not None else OnlinePresence.default(self._client_id)
+        )  # type: Union[Literal[False], OnlinePresence]
 
         self._connect_inner_mqtt_client()
 
@@ -85,7 +87,8 @@ class Mqtt5Connection(IBrokerConnection):
         self._client.on_connect = self._on_connect
         self._client.on_message = self._on_message
         self._client.on_publish = self.on_publish_complete
-        self._client.will_set(**self._lwt.online.paho_kwargs())
+        if self._lwt:
+            self._client.will_set(**self._lwt.online.paho_kwargs())
         if self._username is not None:
             self._client.username_pw_set(self._username, self._password)
         if (
@@ -107,14 +110,14 @@ class Mqtt5Connection(IBrokerConnection):
 
     def __del__(self):
         self._logger.debug("Destructor called for MqttConnection %s", self._client_id)
-        if self._lwt is not None:
+        if self._lwt:
             self._client.publish(**self._lwt.offline.paho_kwargs()).wait_for_publish()
         self._client.disconnect()
         self._client.loop_stop()
 
     @property
-    def online_topic(self) -> str:
-        return self._lwt.topic
+    def online_topic(self) -> Optional[str]:
+        return self._lwt.topic if self._lwt else None
 
     @property
     def client_id(self) -> str:
@@ -192,7 +195,8 @@ class Mqtt5Connection(IBrokerConnection):
                     with self._publishing_lock:
                         self._publish_futures[pub_info.mid] = msg.future
 
-            self._client.publish(**self._lwt.online.paho_kwargs())
+            if self._lwt:
+                self._client.publish(**self._lwt.online.paho_kwargs())
         else:
             self._logger.error(
                 "Connection failed with reason code %s", str(reason_code)

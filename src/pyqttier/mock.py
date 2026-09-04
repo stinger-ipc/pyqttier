@@ -1,5 +1,5 @@
 from concurrent.futures import Future
-from typing import Optional, List
+from typing import Optional, List, Dict, Tuple
 from copy import copy
 from .interface import IBrokerConnection, MessageCallback
 from .message import Message
