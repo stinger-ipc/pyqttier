@@ -1,5 +1,6 @@
 import unittest
 from pyqttier.message import Message
+from pyqttier.contenttype import ContentType
 from paho.mqtt.client import MQTTMessage
 from paho.mqtt.properties import Properties as MqttProperties
 from paho.mqtt.packettypes import PacketTypes
@@ -137,6 +138,66 @@ class TestMessage(unittest.TestCase):
         self.assertEqual(props.CorrelationData, b"corr-id")
         self.assertEqual(props.ResponseTopic, "resp/topic")
         self.assertEqual(props.MessageExpiryInterval, 60)
+
+    def test_paho_kwargs_content_type_with_extra_properties_uses_full_header(self):
+        """Test that a ContentType with parameters is serialized as a full header string."""
+        msg = Message(
+            topic="test",
+            payload=b"data",
+            qos=1,
+            content_type=ContentType("text/html; charset=utf-8; boundary=xyz"),
+        )
+        props = msg.paho_kwargs()["properties"]
+
+        self.assertEqual(props.ContentType, "text/html; charset=utf-8; boundary=xyz")
+
+    def test_paho_kwargs_content_type_plain_string_unaffected(self):
+        """Test that a plain str content_type (not a ContentType) is passed through as-is."""
+        msg = Message(
+            topic="test", payload=b"data", qos=1, content_type="application/json"
+        )
+        props = msg.paho_kwargs()["properties"]
+
+        self.assertEqual(props.ContentType, "application/json")
+
+    def test_from_paho_message_content_type_parses_extra_properties(self):
+        """Test that a Content-Type header with parameters is parsed into a ContentType."""
+        props = MqttProperties(PacketTypes.PUBLISH)
+        props.ContentType = "multipart/form-data; boundary=xyz; charset=utf-8"
+        paho_msg = self._make_paho_message("test", b"data", properties=props)
+
+        msg = Message.from_paho_message(paho_msg)
+
+        self.assertIsInstance(msg.content_type, ContentType)
+        self.assertEqual(str(msg.content_type), "multipart/form-data")
+        self.assertEqual(msg.content_type.boundary, "xyz")
+        self.assertEqual(msg.content_type.charset, "utf-8")
+
+    def test_round_trip_content_type_with_extra_properties(self):
+        """Test that content_type parameters survive a full publish/receive round trip."""
+        original = Message(
+            topic="round/trip",
+            payload=b"payload-data",
+            qos=1,
+            content_type=ContentType("text/html; charset=utf-8; boundary=xyz"),
+        )
+
+        kwargs = original.paho_kwargs()
+        paho_msg = MQTTMessage(topic=kwargs["topic"].encode())
+        paho_msg.payload = kwargs["payload"]
+        paho_msg.qos = kwargs["qos"]
+        paho_msg.retain = kwargs["retain"]
+        paho_msg.properties = kwargs["properties"]
+
+        reconstructed = Message.from_paho_message(paho_msg)
+
+        self.assertIsInstance(reconstructed.content_type, ContentType)
+        self.assertEqual(str(reconstructed.content_type), "text/html")
+        self.assertEqual(
+            reconstructed.content_type.parameters, original.content_type.parameters
+        )
+        self.assertEqual(reconstructed.content_type.charset, "utf-8")
+        self.assertEqual(reconstructed.content_type.boundary, "xyz")
 
     def test_paho_kwargs_with_user_properties(self):
         """Test that non-empty user_properties are converted to UserProperty pairs."""

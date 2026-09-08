@@ -4,6 +4,8 @@ from paho.mqtt.client import MQTTMessage
 from paho.mqtt.properties import Properties as MqttProperties
 from paho.mqtt.packettypes import PacketTypes
 
+from .contenttype import ContentType
+
 
 @dataclass
 class Message:
@@ -30,7 +32,11 @@ class Message:
     def paho_kwargs(self) -> Dict[str, Any]:
         props = MqttProperties(PacketTypes.PUBLISH)
         if self.content_type is not None:
-            props.ContentType = self.content_type
+            props.ContentType = (
+                self.content_type.to_header()
+                if isinstance(self.content_type, ContentType)
+                else self.content_type
+            )
         if self.correlation_data is not None:
             props.CorrelationData = self.correlation_data
         if self.response_topic is not None:
@@ -61,8 +67,8 @@ class Message:
         )
         if "UserProperty" in properties:
             msg_obj.user_properties = dict(properties["UserProperty"])
-        if "ContentType" in properties:
-            msg_obj.content_type = properties["ContentType"]
+        if "ContentType" in properties and isinstance(properties["ContentType"], str):
+            msg_obj.content_type = ContentType(properties["ContentType"])
         if "CorrelationData" in properties:
             msg_obj.correlation_data = properties["CorrelationData"]
         if "ResponseTopic" in properties:
