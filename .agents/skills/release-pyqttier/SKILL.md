@@ -46,15 +46,19 @@ Automate a standard Python release workflow for the `pyqttier` project.
 
 - Format:
 
-  `uv run black src/ examples/ tests/`
+  `task format`
+
+- Linting:
+
+  `task lint`
 
 - Type check:
 
-  `uv run mypy src tests`
+  `task type-check`
 
 - Run tests:
 
-  `uv run pytest`
+  `task test`
 
 - Run smoke test (requires a broker on `localhost:1883`):
   `uv pip install .`

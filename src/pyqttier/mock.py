@@ -1,5 +1,5 @@
 from concurrent.futures import Future
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple  # noqa: F401
 from copy import copy
 from .interface import IBrokerConnection, MessageCallback
 from .message import Message

@@ -34,7 +34,7 @@ def example_basic_connection():
 
     # Wait for connection
     timeout = 5
-    elapsed = 0
+    elapsed = 0.0
     while not conn.is_connected() and elapsed < timeout:
         print(f"⏳ Waiting for connection... ({elapsed}s/{timeout}s)")
         time.sleep(0.5)
@@ -124,7 +124,7 @@ def example_publish_subscribe():
     # Publish some temperature readings
     for temp in [20.5, 21.0, 21.5, 22.0]:
         msg = Message(topic="sensors/temperature", payload=str(temp).encode(), qos=1)
-        future = conn.publish(msg)
+        conn.publish(msg)
         print(f"📤 Published: {temp}°C")
         time.sleep(0.2)
 
@@ -283,9 +283,9 @@ def example_request_response():
                 correlation_data=msg.correlation_data,
                 content_type="application/json",
             )
-            device_conn.publish(
+            device_conn.publish(  # noqa: F821 - closure over enclosing `device_conn`, deleted only after use
                 response
-            )  # noqa: F821 - closure over enclosing `device_conn`, deleted only after use
+            )
             print(f"↩️  Sent response to {msg.response_topic}")
 
     device_conn.subscribe("device/commands", callback=on_command)

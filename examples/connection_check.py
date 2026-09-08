@@ -45,7 +45,7 @@ def main():
     # Wait for initial connection
     print("⏳ Waiting for initial connection...")
     timeout = 100
-    elapsed = 0
+    elapsed = 0.0
     while not conn.is_connected() and elapsed < timeout:
         time.sleep(0.5)
         elapsed += 0.5

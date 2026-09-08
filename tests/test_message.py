@@ -94,7 +94,7 @@ class TestMessage(unittest.TestCase):
 
     def test_post_init_with_explicit_none_user_properties(self):
         """Test that passing user_properties=None explicitly is normalized to {}."""
-        msg = Message(topic="test", payload=b"", qos=0, user_properties=None)
+        msg = Message(topic="test", payload=b"", qos=0, user_properties=None)  # type: ignore[arg-type]
         self.assertEqual(msg.user_properties, {})
 
     def test_paho_kwargs_minimal_fields(self):
@@ -168,7 +168,7 @@ class TestMessage(unittest.TestCase):
 
         msg = Message.from_paho_message(paho_msg)
 
-        self.assertIsInstance(msg.content_type, ContentType)
+        assert isinstance(msg.content_type, ContentType)
         self.assertEqual(str(msg.content_type), "multipart/form-data")
         self.assertEqual(msg.content_type.boundary, "xyz")
         self.assertEqual(msg.content_type.charset, "utf-8")
@@ -191,7 +191,8 @@ class TestMessage(unittest.TestCase):
 
         reconstructed = Message.from_paho_message(paho_msg)
 
-        self.assertIsInstance(reconstructed.content_type, ContentType)
+        assert isinstance(reconstructed.content_type, ContentType)
+        assert isinstance(original.content_type, ContentType)
         self.assertEqual(str(reconstructed.content_type), "text/html")
         self.assertEqual(
             reconstructed.content_type.parameters, original.content_type.parameters

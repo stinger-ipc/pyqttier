@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  GREETING: Hello, world!
+
+tasks:
+  default:
+    desc: Run mypy type checks on src and tests
+    cmds:
+      - task: format
+      - task: lint
+      - task: type-check
+      - task: test
+
+  type-check:
+    desc: Run mypy type checks on src and tests
+    cmds:
+      - uv run mypy --check-untyped-defs src tests examples
+
+  format:
+    desc: Format code with black
+    cmds:
+      - uv run black src tests examples
+
+  test:
+    desc: Run all unit tests
+    cmds:
+      - uv run pytest tests
+
+  lint:
+    desc: Lint code with ruff
+    cmds:
+      - uv run ruff check src tests examples

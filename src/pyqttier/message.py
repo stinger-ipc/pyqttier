@@ -18,7 +18,7 @@ class Message:
     response_topic: Optional[str] = None
     subscription_ids: List[int] = field(default_factory=list)  # Ignored on publish
     message_expiry_interval: Optional[int] = None
-    user_properties: Optional[Dict[str, str]] = field(default_factory=dict)
+    user_properties: Dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.user_properties is None:

@@ -332,7 +332,7 @@ def scenario_qos_levels() -> None:
         for level in (0, 1, 2):
             coll = colls[level]
             assert coll.wait_for(
-                lambda c=coll: len(c.messages) >= 1
+                lambda: len(coll.messages) >= 1
             ), f"QoS {level} message was not received"
             assert (
                 coll.messages[0].payload == f"qos-{level}".encode()

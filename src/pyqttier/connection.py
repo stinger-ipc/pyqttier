@@ -2,7 +2,7 @@ from concurrent.futures import Future
 import logging
 import threading
 import uuid
-from typing import Optional, Tuple, Dict, List, Union
+from typing import Optional, Tuple, Union, Dict, List  # noqa: F401
 from paho.mqtt.client import Client as MqttClient, topic_matches_sub
 from paho.mqtt.enums import MQTTProtocolVersion, CallbackAPIVersion
 from paho.mqtt.properties import Properties as MqttProperties
@@ -53,11 +53,14 @@ class Mqtt5Connection(IBrokerConnection):
         lwt_properties = MqttProperties(PacketTypes.PUBLISH)
         lwt_properties.ContentType = "application/json"
         lwt_properties.MessageExpiryInterval = 60 * 60 * 24  # 1 day
-        self._lwt = (
-            OnlinePresence.default(self._client_id)
-            if lwt is True or lwt is None
-            else lwt
-        )  # type: Union[bool, OnlinePresence]
+        if lwt is True or lwt is None:
+            self._lwt = OnlinePresence.default(
+                self._client_id
+            )  # type: Optional[OnlinePresence]
+        elif lwt is False:
+            self._lwt = None
+        else:
+            self._lwt = lwt
 
         self._connect_inner_mqtt_client()
 
@@ -121,7 +124,7 @@ class Mqtt5Connection(IBrokerConnection):
 
     @property
     def online_topic(self) -> Optional[str]:
-        return self._lwt.topic if self._lwt else None  # type: ignore[union-attr]
+        return self._lwt.topic if self._lwt else None
 
     @property
     def client_id(self) -> str:

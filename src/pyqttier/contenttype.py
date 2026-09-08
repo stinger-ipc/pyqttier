@@ -63,6 +63,14 @@ class ContentType(str):
 
         return obj
 
+    def __getattr__(self, name: str) -> str:
+        try:
+            return self.parameters[name]
+        except KeyError:
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute {name!r}"
+            ) from None
+
     def to_header(self) -> str:
         """
         Reconstruct the full Content-Type header string, including parameters.
