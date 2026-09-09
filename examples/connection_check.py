@@ -9,6 +9,7 @@ This example shows:
 4. Automatic reconnection handling by the underlying MQTT client
 """
 import os
+import ssl
 import time
 import signal
 import sys
@@ -35,7 +36,9 @@ def main():
     password = os.getenv("MQTT_PASSWORD")
     credentials = None
     if username is not None and password is not None:
-        print(f"🔑 Using credentials for {username} (password provided but not displayed)")
+        print(
+            f"🔑 Using credentials for {username} (password provided but not displayed)"
+        )
         credentials = (username, password)
 
     print(f"🔧 Connecting to MQTT broker at {hostname}:{port}")
@@ -47,7 +50,12 @@ def main():
     transport.enable_tls(cert_reqs=ssl.CERT_NONE)
 
     # Create connection
-    conn = Mqtt5Connection(transport=transport, client_id="connection-check-example", credentials=credentials, lwt=False)
+    conn = Mqtt5Connection(
+        transport=transport,
+        client_id="connection-check-example",
+        credentials=credentials,
+        lwt=False,
+    )
 
     # Wait for initial connection
     print("⏳ Waiting for initial connection...")

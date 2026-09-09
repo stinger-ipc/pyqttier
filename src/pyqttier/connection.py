@@ -143,7 +143,9 @@ class Mqtt5Connection(IBrokerConnection):
         self._message_callbacks.append(callback)
 
     def _on_message(self, client, userdata, msg):
-        self._logger.debug("Got a message to %s : %s", msg.topic, msg.payload.decode(errors="replace"))
+        self._logger.debug(
+            "Got a message to %s : %s", msg.topic, msg.payload.decode(errors="replace")
+        )
         message = Message.from_paho_message(msg)
         if len(message.subscription_ids) > 0:
             for sub_id in message.subscription_ids:
