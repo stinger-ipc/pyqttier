@@ -29,14 +29,8 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     # Get broker configuration from environment variables with defaults
-    hostname = os.getenv("MQTT_HOSTNAME", "smokecloud.vivint.com")
-    port = int(os.getenv("MQTT_PORT", "8883"))
-    username = os.getenv("MQTT_USERNAME")
-    password = os.getenv("MQTT_PASSWORD")
-    credentials = None
-    if username is not None and password is not None:
-        print(f"🔑 Using credentials for {username} (password provided but not displayed)")
-        credentials = (username, password)
+    hostname = os.getenv("MQTT_HOSTNAME", "localhost")
+    port = int(os.getenv("MQTT_PORT", "1883"))
 
     print(f"🔧 Connecting to MQTT broker at {hostname}:{port}")
 
@@ -44,10 +38,9 @@ def main():
     transport = MqttTransport(
         transport_type=MqttTransportType.TCP, host=hostname, port=port
     )
-    transport.enable_tls(cert_reqs=ssl.CERT_NONE)
 
     # Create connection
-    conn = Mqtt5Connection(transport=transport, client_id="connection-check-example", credentials=credentials, lwt=False)
+    conn = Mqtt5Connection(transport=transport, client_id="connection-check-example")
 
     # Wait for initial connection
     print("⏳ Waiting for initial connection...")
@@ -64,17 +57,39 @@ def main():
 
     print("✅ Connected to MQTT broker!")
     print(f"   Client ID: {conn.client_id}")
+    print(f"   Online topic: {conn.online_topic}")
+
+    # Subscribe to 'test/pong' topic
+    def on_pong_message(message):
+        print(f"📨 Received on 'test/pong': {message.payload.decode()}")
+
+    subscription_id = conn.subscribe("test/pong", callback=on_pong_message)
+    print(f"📡 Subscribed to 'test/pong' with subscription ID: {subscription_id}")
 
     # Main loop: publish to 'test/ping' every minute
-    print("🔄 Starting main loop")
+    print("🔄 Starting main loop - will publish to 'test/ping' every minute")
     print("   Press Ctrl+C to stop")
 
     try:
         while True:
             if conn.is_connected():
-                print("✅ Still connected (probably)")
+                # Create and publish ping message
+                ping_msg = Message(
+                    topic="test/ping",
+                    payload=f"ping from {conn.client_id} at {time.time()}".encode(),
+                    qos=1,
+                )
+                future = conn.publish(ping_msg)
+                # Wait for publish to complete (with timeout)
+                try:
+                    future.result(timeout=5.0)
+                    print(f"📤 Published to 'test/ping': {ping_msg.payload.decode()}")
+                except TimeoutError:
+                    print("⚠️  Publish timeout", future)
+            else:
+                print("⚠️  Not connected - waiting for reconnection...")
 
-            # Wait 60 seconds before next check
+            # Wait 60 seconds before next publish
             time.sleep(60)
 
     except KeyboardInterrupt:

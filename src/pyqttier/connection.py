@@ -91,6 +91,7 @@ class Mqtt5Connection(IBrokerConnection):
             client_id=self._client_id,
             reconnect_on_failure=True,
         )
+        self._client.enable_logger()
         self._client.on_connect = self._on_connect
         self._client.on_message = self._on_message
         self._client.on_publish = self.on_publish_complete
@@ -142,7 +143,7 @@ class Mqtt5Connection(IBrokerConnection):
         self._message_callbacks.append(callback)
 
     def _on_message(self, client, userdata, msg):
-        self._logger.debug("Got a message to %s : %s", msg.topic, msg.payload.decode())
+        self._logger.debug("Got a message to %s : %s", msg.topic, msg.payload.decode(errors="replace"))
         message = Message.from_paho_message(msg)
         if len(message.subscription_ids) > 0:
             for sub_id in message.subscription_ids:
@@ -205,9 +206,17 @@ class Mqtt5Connection(IBrokerConnection):
             if self._lwt:
                 self._client.publish(**self._lwt.online.paho_kwargs())
         else:
-            self._logger.error(
-                "Connection failed with reason code %s", str(reason_code)
-            )
+            reason_string = getattr(properties, "ReasonString", None)
+            if reason_string:
+                self._logger.error(
+                    "Connection failed with reason code %s: %s",
+                    str(reason_code),
+                    reason_string,
+                )
+            else:
+                self._logger.error(
+                    "Connection failed with reason code %s", str(reason_code)
+                )
             self._connected = False
 
     def on_publish_complete(
