@@ -44,6 +44,10 @@ Automate a standard Python release workflow for the `pyqttier` project.
 
   `uv version --bump=major`
 
+- After bumping any version component, update the `uv.lock` file with this command:
+  
+  `uv sync`
+
 - Format:
 
   `task format`
