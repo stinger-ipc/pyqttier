@@ -26,7 +26,7 @@ import threading
 from typing import Callable, Dict, List
 
 from pyqttier.connection import Mqtt5Connection
-from pyqttier.message import Message
+from pyqttier import Message
 from pyqttier.transport import MqttTransport, MqttTransportType
 
 # ── Configuration ──────────────────────────────────────────────────────────────

@@ -1,8 +1,7 @@
 from concurrent.futures import Future
 from typing import Optional, List, Dict, Tuple  # noqa: F401
 from copy import copy
-from .interface import IBrokerConnection, MessageCallback
-from .message import Message
+from pystingerconniface import IBrokerConnection, Message, MessageCallback
 import threading
 import logging
 

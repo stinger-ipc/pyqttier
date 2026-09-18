@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from pyqttier.mock import MockConnection
-from pyqttier.message import Message
+from pyqttier import Message
 
 
 def example_basic_publish_subscribe():

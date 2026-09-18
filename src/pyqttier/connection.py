@@ -8,9 +8,8 @@ from paho.mqtt.enums import MQTTProtocolVersion, CallbackAPIVersion
 from paho.mqtt.properties import Properties as MqttProperties
 from paho.mqtt.packettypes import PacketTypes
 from queue import Queue, Empty
-from .interface import IBrokerConnection, MessageCallback
+from pystingerconniface import IBrokerConnection, Message, MessageCallback
 from .transport import MqttTransport, MqttTransportType
-from .message import Message
 from .lwt import OnlinePresence
 from dataclasses import dataclass
 

@@ -1,4 +1,4 @@
-from .message import Message
+from pystingerconniface import Message
 from dataclasses import dataclass
 
 

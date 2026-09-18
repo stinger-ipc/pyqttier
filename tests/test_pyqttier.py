@@ -1,5 +1,5 @@
 import unittest
-from pyqttier.message import Message
+from pyqttier import Message
 from pyqttier.mock import MockConnection
 from pyqttier.transport import MqttTransport, MqttTransportType
 import threading
@@ -229,7 +229,7 @@ class TestInterface(unittest.TestCase):
 
     def test_mock_implements_interface(self):
         """Test that MockConnection implements all interface methods."""
-        from pyqttier.interface import IBrokerConnection
+        from pystingerconniface import IBrokerConnection
 
         conn = MockConnection()
         self.assertIsInstance(conn, IBrokerConnection)

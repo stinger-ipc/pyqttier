@@ -15,7 +15,7 @@ import sys
 
 from pyqttier.connection import Mqtt5Connection
 from pyqttier.transport import MqttTransport, MqttTransportType
-from pyqttier.message import Message
+from pyqttier import Message
 
 
 def signal_handler(sig, frame):
